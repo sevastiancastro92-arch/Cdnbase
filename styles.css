@@ -121,3 +121,19 @@ body {
 
 .loading { text-align: center; color: var(--neon-blue); font-size: 1.5rem; margin-top: 50px; animation: blink 1s infinite;}
 @keyframes blink { 50% { opacity: 0.5; } }
+/* --- ESTILOS DE PARTÍCULAS --- */
+#particles-js {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 0; /* Se queda detrás del contenido */
+    pointer-events: none; /* Permite clicks en el contenido */
+}
+
+.container {
+    position: relative;
+    z-index: 10; /* Asegura que el contenido flote sobre las partículas */
+}
+
