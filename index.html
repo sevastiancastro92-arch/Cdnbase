@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script>
+        if (!sessionStorage.getItem('xit_admin_logged')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - XIT CDN</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-green: #39ff14;
+            --neon-red: #ff003c;
+            --bg-dark: #050505;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background-image: linear-gradient(rgba(5,5,5,0.9), rgba(5,5,5,0.9));
+        }
+
+        .container { max-width: 600px; margin: 0 auto; }
+
+        /* NAVEGACIÓN */
+        .nav-panel { display: flex; gap: 10px; margin-bottom: 20px; }
+        .nav-btn {
+            flex: 1; padding: 15px; background: rgba(20, 20, 30, 0.8);
+            border: 1px solid #333; color: #888; cursor: pointer;
+            text-align: center; font-weight: bold; text-transform: uppercase;
+            border-radius: 8px; transition: 0.3s; display: flex; 
+            align-items: center; justify-content: center; gap: 8px;
+        }
+        .nav-btn:hover { color: white; border-color: white; }
+        .nav-btn.active {
+            color: var(--neon-blue); border-color: var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            background: rgba(0, 243, 255, 0.05);
+        }
+        /* Botón Salir */
+        .btn-logout { border-color: #500; color: var(--neon-red); flex: 0.4; }
+        .btn-logout:hover { background: var(--neon-red); color: white; box-shadow: 0 0 15px var(--neon-red); }
+
+        /* CAJA PRINCIPAL */
+        .admin-box {
+            background: rgba(20, 20, 30, 0.9);
+            border: 2px solid var(--neon-purple);
+            box-shadow: 0 0 20px rgba(188, 19, 254, 0.2);
+            padding: 30px; border-radius: 15px;
+        }
+        .hidden { display: none !important; }
+
+        h2 { text-align: center; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); margin-top: 0; }
+
+        /* INPUTS Y BOTONES */
+        input, button { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #333; background: #111; color: white; box-sizing: border-box; font-family: 'Rajdhani', sans-serif; }
+        input:focus { outline: none; border-color: var(--neon-purple); }
+        
+        button { background: var(--neon-purple); border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
+        button:hover { box-shadow: 0 0 15px var(--neon-purple); color: white; }
+        
+        #btnCancelEdit { background: #333; color: #aaa; display: none; }
+        #btnCancelEdit:hover { background: #555; color: white; box-shadow: none; }
+
+        /* LISTA DE POSTS */
+        .post-list-item { display: flex; align-items: center; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+        .post-thumb { width: 60px; height: 60px; border-radius: 5px; object-fit: cover; margin-right: 15px; border: 1px solid #555; }
+        .post-info { flex-grow: 1; }
+        .post-info h4 { margin: 0; color: white; }
+        .post-info p { margin: 5px 0 0; font-size: 0.8rem; color: #888; }
+        
+        .action-btns { display: flex; gap: 5px; }
+        .btn-mini { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; margin: 0; }
+        .btn-edit { background: #333; color: var(--neon-blue); }
+        .btn-delete { background: #333; color: var(--neon-red); }
+
+        .preview-img-box { text-align: center; display: none; margin-bottom: 15px; }
+        .preview-img-box img { max-width: 100px; border: 1px solid var(--neon-purple); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div class="nav-panel">
+            <div id="tabCreate" class="nav-btn active" onclick="switchTab('create')">
+                <i class="fas fa-plus-circle"></i> Crear
+            </div>
+            <div id="tabManage" class="nav-btn" onclick="switchTab('manage')">
+                <i class="fas fa-list"></i> Ver Lista
+            </div>
+            <div class="nav-btn btn-logout" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+        </div>
+
+        <div id="createSection" class="admin-box">
+            <h2 id="formTitle">PANEL DE CREACIÓN</h2>
+            
+            <form id="uploadForm">
+                <input type="hidden" id="editDocId">
+                <input type="hidden" id="currentImageUrl">
+
+                <label>Título del Mod:</label>
+                <input type="text" id="titulo" placeholder="Ej: XIT VIP MOD V1" required>
+
+                <div id="currentImgPreview" class="preview-img-box">
+                    <img id="imgPreviewSrc" src="" alt="Preview">
+                    <p style="font-size:0.8rem; color:#aaa;">Imagen actual</p>
+                </div>
+
+                <label>Imagen:</label>
+                <input type="file" id="imagenFile" accept="image/*">
+
+                <label>Link de Descarga:</label>
+                <input type="url" id="linkDescarga" placeholder="https://mediafire..." required>
+
+                <label>Link de WhatsApp:</label>
+                <input type="url" id="linkWhatsapp" placeholder="https://whatsapp.com/..." required>
+
+                <button type="submit" id="btnSubir">PUBLICAR MOD</button>
+                <button type="button" id="btnCancelEdit" onclick="resetForm()">CANCELAR EDICIÓN</button>
+            </form>
+            <div id="status" style="text-align:center; font-weight:bold; margin-top:10px;"></div>
+        </div>
+
+        <div id="manageSection" class="admin-box hidden">
+            <h2>GESTIONAR MODS</h2>
+            <div id="postsList">Cargando...</div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, deleteDoc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // TUS CREDENCIALES
+        const firebaseConfig = {
+            apiKey: "AIzaSyDWRVCwGU7aBuxZ-h9Rj0SudCWylIsM7Ak",
+            authDomain: "reportes-ed444.firebaseapp.com",
+            projectId: "reportes-ed444",
+            storageBucket: "reportes-ed444.firebasestorage.app",
+            messagingSenderId: "635066198398",
+            appId: "1:635066198398:web:b169cbc70e970a48a7eb2f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const imgbbAPIKey = "a20a4cb04c4d154d5aa5e3301d93ad62"; 
+
+        // --- FUNCIONES GLOBALES (Window) ---
+        
+        window.logout = () => {
+            if(confirm("¿Cerrar sesión?")) {
+                sessionStorage.removeItem('xit_admin_logged');
+                window.location.href = 'login.html';
+            }
+        };
+
+        window.switchTab = (tab) => {
+            const createSec = document.getElementById('createSection');
+            const manageSec = document.getElementById('manageSection');
+            const tabCreate = document.getElementById('tabCreate');
+            const tabManage = document.getElementById('tabManage');
+
+            if(tab === 'create'){
+                createSec.classList.remove('hidden');
+                manageSec.classList.add('hidden');
+                tabCreate.classList.add('active');
+                tabManage.classList.remove('active');
+            } else {
+                createSec.classList.add('hidden');
+                manageSec.classList.remove('hidden');
+                tabCreate.classList.remove('active');
+                tabManage.classList.add('active');
+            }
+        };
+
+        window.resetForm = () => {
+            document.getElementById('uploadForm').reset();
+            document.getElementById('editDocId').value = "";
+            document.getElementById('currentImageUrl').value = "";
+            document.getElementById('currentImgPreview').style.display = 'none';
+            document.getElementById('formTitle').innerText = "PANEL DE CREACIÓN";
+            document.getElementById('btnSubir').innerText = "PUBLICAR MOD";
+            document.getElementById('btnCancelEdit').style.display = 'none';
+            document.getElementById('status').innerText = "";
+        };
+
+        window.borrarPost = async (id) => {
+            if(confirm("¿Eliminar este mod permanentemente?")) {
+                try {
+                    await deleteDoc(doc(db, "publicaciones", id));
+                } catch (error) {
+                    alert("Error: " + error.message);
+                }
+            }
+        };
+
+        window.editarPost = (id, titulo, imagen, descarga, whatsapp) => {
+            window.switchTab('create');
+            document.getElementById('editDocId').value = id;
+            document.getElementById('titulo').value = titulo;
+            document.getElementById('linkDescarga').value = descarga;
+            document.getElementById('linkWhatsapp').value = whatsapp;
+            document.getElementById('currentImageUrl').value = imagen;
+            document.getElementById('imgPreviewSrc').src = imagen;
+            document.getElementById('currentImgPreview').style.display = 'block';
+            
+            document.getElementById('formTitle').innerText = "EDITANDO MOD";
+            document.getElementById('btnSubir').innerText = "ACTUALIZAR";
+            document.getElementById('btnCancelEdit').style.display = 'block';
+            window.scrollTo(0,0);
+        };
+
+        // --- CARGAR LISTA (REALTIME) ---
+        const postsList = document.getElementById('postsList');
+        const q = query(collection(db, "publicaciones"), orderBy("fecha", "desc"));
+        
+        onSnapshot(q, (snapshot) => {
+            postsList.innerHTML = "";
+            if(snapshot.empty){
+                postsList.innerHTML = "<p style='text-align:center'>No hay publicaciones.</p>";
+                return;
+            }
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                postsList.innerHTML += `
+                    <div class="post-list-item">
+                        <img src="${data.imagen}" class="post-thumb">
+                        <div class="post-info">
+                            <h4>${data.titulo}</h4>
+                            <p>${new Date(data.fecha?.seconds * 1000).toLocaleDateString()}</p>
+                        </div>
+                        <div class="action-btns">
+                            <button class="btn-mini btn-edit" onclick="editarPost('${docSnap.id}', '${data.titulo}', '${data.imagen}', '${data.descarga}', '${data.whatsapp}')"><i class="fas fa-edit"></i></button>
+                            <button class="btn-mini btn-delete" onclick="borrarPost('${docSnap.id}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+
+        // --- SUBIR / ACTUALIZAR ---
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubir');
+            const status = document.getElementById('status');
+            const file = document.getElementById('imagenFile').files[0];
+            const docId = document.getElementById('editDocId').value;
+            const isEditing = !!docId;
+
+            btn.disabled = true;
+            status.style.color = "yellow";
+            status.innerText = "Procesando...";
+
+            let finalImageUrl = document.getElementById('currentImageUrl').value;
+
+            try {
+                // Subir a ImgBB si hay archivo nuevo
+                if (file) {
+                    status.innerText = "Subiendo imagen...";
+                    const formData = new FormData();
+                    formData.append("image", file);
+                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbAPIKey}`, { method: "POST", body: formData });
+                    const data = await res.json();
+                    if(!data.success) throw new Error("Fallo en ImgBB");
+                    finalImageUrl = data.data.url;
+                } else if (!isEditing) {
+                    throw new Error("Selecciona una imagen");
+                }
+
+                // Guardar en Firebase
+                status.innerText = "Guardando datos...";
+                const datos = {
+                    titulo: document.getElementById('titulo').value,
+                    imagen: finalImageUrl,
+                    descarga: document.getElementById('linkDescarga').value,
+                    whatsapp: document.getElementById('linkWhatsapp').value,
+                    fecha: serverTimestamp()
+                };
+
+                if (isEditing) {
+                    await updateDoc(doc(db, "publicaciones", docId), datos);
+                    status.innerText = "¡Actualizado!";
+                } else {
+                    await addDoc(collection(db, "publicaciones"), datos);
+                    status.innerText = "¡Publicado!";
+                }
+                
+                status.style.color = "#39ff14";
+                setTimeout(() => { window.resetForm(); btn.disabled = false; }, 1500);
+
+            } catch (error) {
+                console.error(error);
+                status.style.color = "red";
+                status.innerText = "Error: " + error.message;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

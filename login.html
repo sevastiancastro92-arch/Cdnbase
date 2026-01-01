@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Admin - XIT CDN</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --neon-blue: #00f3ff; --neon-purple: #bc13fe; --bg-dark: #050505; }
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: linear-gradient(rgba(5,5,5,0.9), rgba(5,5,5,0.9)), 
+                              url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2V0h2v20h2v2H22v-2h-2z' fill='%23222' fill-opacity='0.2' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+        .login-box {
+            background: rgba(20, 20, 30, 0.9);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            width: 300px;
+        }
+        h2 { margin-top: 0; color: white; text-shadow: 0 0 10px var(--neon-blue); }
+        input {
+            width: 100%; padding: 12px; margin-bottom: 20px;
+            background: #111; border: 1px solid #333; color: white;
+            border-radius: 5px; box-sizing: border-box; text-align: center;
+        }
+        input:focus { outline: none; border-color: var(--neon-purple); }
+        button {
+            width: 100%; padding: 12px; background: var(--neon-blue);
+            border: none; font-weight: bold; cursor: pointer;
+            border-radius: 5px; transition: 0.3s;
+        }
+        button:hover { box-shadow: 0 0 15px var(--neon-blue); }
+        #errorMsg { color: #ff003c; display: none; margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <h2>🔒 ACCESO XIT</h2>
+        <form id="loginForm">
+            <input type="text" id="user" placeholder="Usuario" required>
+            <input type="password" id="pass" placeholder="Contraseña" required>
+            <button type="submit">ENTRAR</button>
+        </form>
+        <div id="errorMsg">Acceso Denegado</div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            const error = document.getElementById('errorMsg');
+
+            // --- CONFIGURACIÓN DE CREDENCIALES ---
+            // CAMBIA ESTO POR LO QUE QUIERAS
+            const USER_CORRECTO = "admin"; 
+            const PASS_CORRECTO = "XIT2025"; 
+            // -------------------------------------
+
+            if(u === USER_CORRECTO && p === PASS_CORRECTO) {
+                // Guardamos una "llave" en el navegador
+                sessionStorage.setItem('xit_admin_logged', 'true');
+                // Redirigir al panel
+                window.location.href = 'index.html';
+            } else {
+                error.style.display = 'block';
+                // Efecto de vibración
+                document.querySelector('.login-box').animate([
+                    { transform: 'translateX(0)' },
+                    { transform: 'translateX(-10px)' },
+                    { transform: 'translateX(10px)' },
+                    { transform: 'translateX(0)' }
+                ], { duration: 300 });
+            }
+        });
+    </script>
+</body>
+</html>
